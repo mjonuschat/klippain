@@ -131,6 +131,10 @@ function install_config {
     if [ ! -f "${BACKUP_DIR}/.VERSION" ]; then
         printf "[INSTALL] New installation detected: config templates will be set in place!\n\n"
         find ${FRIX_CONFIG_PATH}/user_templates/ -type d -name 'mcu_defaults' -prune -o -type f -print | xargs cp -ft ${USER_CONFIG_PATH}/
+        if [ -f "${BACKUP_DIR}/crowsnest.conf" ]; then
+            cp -f "${BACKUP_DIR}/crowsnest.conf" "${USER_CONFIG_PATH}/crowsnest.conf"
+            printf "[INSTALL] Existing crowsnest.conf restored from backup\n\n"
+        fi
         install_mcu_templates
     fi
 
