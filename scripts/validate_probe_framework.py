@@ -99,17 +99,19 @@ def validate(repo: Path) -> list[str]:
         hook_family = variable(text, "probe_hook_family")
         needs_contact_guard = variable(text, "probe_needs_contact_temp_guard", "False").lower() == "true"
         z_home_mode = variable(text, "probe_contact_z_home_mode", "none")
+        startprint_home_mode = variable(text, "probe_contact_z_home_startprint_mode", z_home_mode)
         auto_cal_mode = variable(text, "probe_contact_auto_calibrate_mode", "none")
         declared_hook_includes = hook_includes(text)
 
         for mode_name, mode in {
             "probe_contact_z_home_mode": z_home_mode,
+            "probe_contact_z_home_startprint_mode": startprint_home_mode,
             "probe_contact_auto_calibrate_mode": auto_cal_mode,
         }.items():
             if mode not in VALID_MODES:
                 errors.append(f"{profile}: {mode_name} has invalid value {mode!r}; valid values are {sorted(VALID_MODES)}")
 
-        if hook_family and z_home_mode == "none" and auto_cal_mode == "none":
+        if hook_family and z_home_mode == "none" and startprint_home_mode == "none" and auto_cal_mode == "none":
             errors.append(f"{profile}: hook family {hook_family!r} is set but both contact operation modes are none")
 
         if len(declared_hook_includes) > 1:
@@ -133,6 +135,12 @@ def validate(repo: Path) -> list[str]:
                 errors.append(f"{profile}: contact Z home uses hook mode but {hook_file} does not exist")
             elif not has_macro(hook_text, HOOK_MACROS["contact_z_home"]):
                 errors.append(f"{profile}: contact Z home uses hook mode but {HOOK_MACROS['contact_z_home']} is missing")
+
+        if startprint_home_mode == "hook":
+            if not hook_file or not hook_file.exists():
+                errors.append(f"{profile}: contact start-print Z home uses hook mode but {hook_file} does not exist")
+            elif not has_macro(hook_text, HOOK_MACROS["contact_z_home"]):
+                errors.append(f"{profile}: contact start-print Z home uses hook mode but {HOOK_MACROS['contact_z_home']} is missing")
 
         if auto_cal_mode == "hook":
             if not hook_file or not hook_file.exists():

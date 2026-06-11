@@ -15,6 +15,7 @@ Use one probe include:
 
 `voron_tap.cfg` keeps the legacy internal identifier `probe_type_enabled: "vorontap"` for compatibility.
 `revo_pz.cfg` is a standard Klipper `[probe]` profile with `probe_contact_z_home_mode: "standard_g28"`, plus Revo PZ-specific per-probe current handling in `[probe] activate_gcode` and `deactivate_gcode`.
+`cartographer_touch.cfg` uses standard Cartographer scan-mode `G28` for initial homing, then runs `contact_z_home` during `START_PRINT` after tilt calibration and before bed mesh.
 
 ## Shared Contact Variables
 
@@ -47,6 +48,15 @@ contact_auto_calibrate
 ```
 
 `contact_z_home` runs a probe-supported contact Z-home operation. `contact_auto_calibrate` runs a probe-supported contact model calibration, such as Beacon Contact autocalibration. Cartographer Survey Touch does not run `CARTOGRAPHER_TOUCH_CALIBRATE` during normal start print; that remains a user-initiated setup operation.
+
+Profiles can keep normal homing separate from the `START_PRINT` contact operation. `probe_contact_z_home_mode` controls homing/manual contact-home dispatch. `probe_contact_z_home_startprint_mode` controls the `START_PRINT` `contact_z_home` action and defaults to `probe_contact_z_home_mode` when unset. Cartographer Touch sets:
+
+```ini
+variable_probe_contact_z_home_mode: "none"
+variable_probe_contact_z_home_startprint_mode: "hook"
+```
+
+This lets initial `G28` use Cartographer's virtual endstop scan mode, then calls `CARTOGRAPHER_TOUCH_HOME` through the Cartographer hook after tilt calibration and before bed mesh.
 
 contact_z_home fails closed when the active probe profile does not support hook-based contact Z-home. contact_auto_calibrate warns and no-ops by default when unsupported, or raises when this policy is set to `error`:
 

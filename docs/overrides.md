@@ -67,8 +67,9 @@ Override these lists in `overrides.cfg` to reorder actions, remove actions,
 duplicate actions, or insert your own custom actions.
 
 Built-in `START_PRINT` actions are `bed_soak`, `extruder_preheating`,
-`chamber_soak`, `extruder_heating`, `tilt_calib`, `z_offset`, `beacon_calib`,
-`bedmesh`, `purge`, `clean`, and `primeline`.
+`chamber_soak`, `extruder_heating`, `tilt_calib`, `z_offset`,
+`contact_z_home`, `contact_auto_calibrate`, `beacon_calib`, `bedmesh`, `purge`,
+`clean`, and `primeline`.
 
 Built-in `END_PRINT` actions are `retract_filament`, `turn_off_heaters`,
 `turn_off_fans`, `turn_off_motors`, and `reset_limits`.
