@@ -1,7 +1,9 @@
-## [unreleased]
+## [4.4.0-beta.1]
 
 ### 🚀 Features
 
+- Add Cartographer ADXL configs
+- Allow non-temperature_sensor chamber sensors in heatsoak
 - Add Fysetc SB Combo V2 support
 - Add Orbitool board support
 - Add Mellow FLY D5 support
@@ -38,10 +40,14 @@
 - Add built in adxl sensor from nitehawk sb board
 - Add Beacon accelerometer support
 - Add Mellow Fly Gemini v3 MCU template
-- Add generic nitehawk adxl include
 
 ### 🐛 Bug Fixes
 
+- Relax chamber heatsoak temperature check
+- Use contact home action for Beacon
+- Correct BTT EBB GEN2 fan aliases
+- Align Cartographer Touch start-print homing
+- Clean up Cartographer Touch config
 - Skip cancel park when axes are unhomed
 - Gate START_PRINT on completed startup
 - Guard dockable probe cleanup during tilt errors
@@ -76,10 +82,14 @@
 
 ### 💼 Other
 
+- Update Cartographer Touch config to current Cartographer naming
+- Add CHANGELOG.md
 - Document virtual z probe framework
 - Add virtual z probe framework validator
 - Update print action customization instructions
+- Explain print action customization
 - Clarify public and board-specific pin aliases
+- Add generic nitehawk adxl include
 - Make nitehawk 36 optional overrides opt-in
 - I've added support for the Nitehawk-36 LDO toolboard. See also https://github.com/MotorDynamicsLab/Nitehawk-36
 - Update LDO_Nitehawk-SB_v1.0.cfg
@@ -88,6 +98,8 @@
 - Code cleanup in some templates (removed extra spaces)
 - Message update to show "Available RAM" rather than "Used RAM"
 - Remove old artifacts from TMC2240 init feature
+- Remove last M204 for SET_VELOCITY_LIMIT
+- Remove M204 for SET_VELOCITY_LIMIT
 - Remove M204 in favor of SET_VELOCITY_LIMIT
 - Update beeper sections
 - Update chamber temp docs for PrusaSlicer >= 2.8
