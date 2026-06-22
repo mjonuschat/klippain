@@ -1,0 +1,127 @@
+## [4.4.0-beta.1]
+
+### 🚀 Features
+
+- Add Cartographer ADXL configs
+- Allow non-temperature_sensor chamber sensors in heatsoak
+- Add Fysetc SB Combo V2 support
+- Add Orbitool board support
+- Add Mellow FLY D5 support
+- Add Mellow FLY ERCF v2 board support
+- Add Fysetc H36 Combo V2 support
+- Support combined filament sensors
+- Add BTT EBB SB2209 USB support
+- Add Revo PZ virtual z probe profile
+- Add virtual z probe framework macros
+- Add BTT MMB CAN 1.1 and 2.0 templates
+- Add 220mm bed size support
+- Add BTT EBB GEN2 toolhead support
+- Implement user_template for sb2040-v3-pro
+- Support Mellow FLY-SB2040-PRO-V3
+- Beacon contact support
+- BTT TMC5160 sensorless homing
+- Reset velocity limits in END_PRINT macro
+- Dynamic hooks for END_PRINT and START_PRINT macros
+- Add function for pause at (next) layer
+- Add AWD support (2x X, 2x Y)
+- Add expander templates support
+- Add support for LDO Picobilical
+- Add custom4..9 in start_print
+- Dynamic start print actions
+- Dynamic end print actions
+- Turn off hotend on pause
+- Add support for BTT Manta E3EZ board
+- Add optional nozzle wipe to the prime line macro
+- Set new idle timeout on pause
+- Add sht v3 toolhead board
+- Add sht v3 toolhead board
+- Add FYSETC Nozzle-Input-Shaper accelerometer support
+- Add mcu Fystec Cheetah v3
+- Add built in adxl sensor from nitehawk sb board
+- Add Beacon accelerometer support
+- Add Mellow Fly Gemini v3 MCU template
+
+### 🐛 Bug Fixes
+
+- Relax chamber heatsoak temperature check
+- Use contact home action for Beacon
+- Correct BTT EBB GEN2 fan aliases
+- Align Cartographer Touch start-print homing
+- Clean up Cartographer Touch config
+- Skip cancel park when axes are unhomed
+- Gate START_PRINT on completed startup
+- Guard dockable probe cleanup during tilt errors
+- Gate status calls on LED control availability
+- Correct Manta M5P endstop aliases
+- Sort installer MCU menus and prettify template names
+- Clamp park Z against transformed toolhead position
+- Preserve external service configs on first install
+- Preserve external symlinks in config backups
+- Harden fan tachometer checks
+- Preserve Crowsnest config on first install
+- Map Leviathan filter fan to FAN3
+- Add Leviathan v1.3 defaults and correct shared pin mappings
+- Pullup resistors for LDO Leviathan
+- Low temp check: heat up extruder if below min_extrude_temp
+- Align double skr aliases with pinout naming
+- Fix print end typo in docs
+- Restore run current after homing on CoreXY
+- Warn if beacon home_xy_position has not been configured
+- Missing retract_length variable in END_PRINT
+- START_PRINT: disable filament sensor
+- Fix default pins for SB2209 v1.0
+- Fix typo in qgl.cfg
+- Fix filament sensor activation for material as default
+- Fix typo in nozzle cleaning
+- Manta 8 v2.0 EXP port mapping
+- Fix fan pin for BTT_Manta_M8P_v2.0.cfg
+- Fix system_info.py for RAM usage
+- Fix max_z bug in PARK macro
+- Fix v0_display pin and improved overrides docs
+- Fix pinout for Fysetc_ERB board
+
+### 💼 Other
+
+- Update Cartographer Touch config to current Cartographer naming
+- Add CHANGELOG.md
+- Document virtual z probe framework
+- Add virtual z probe framework validator
+- Update print action customization instructions
+- Explain print action customization
+- Clarify public and board-specific pin aliases
+- Add generic nitehawk adxl include
+- Make nitehawk 36 optional overrides opt-in
+- I've added support for the Nitehawk-36 LDO toolboard. See also https://github.com/MotorDynamicsLab/Nitehawk-36
+- Update LDO_Nitehawk-SB_v1.0.cfg
+- Optional setting for adaptive primeline
+- Reset layers stats on start print
+- Code cleanup in some templates (removed extra spaces)
+- Message update to show "Available RAM" rather than "Used RAM"
+- Remove old artifacts from TMC2240 init feature
+- Remove last M204 for SET_VELOCITY_LIMIT
+- Remove M204 for SET_VELOCITY_LIMIT
+- Remove M204 in favor of SET_VELOCITY_LIMIT
+- Update beeper sections
+- Update chamber temp docs for PrusaSlicer >= 2.8
+- Also enable fcob light when caselight_on_at_startup
+- BTT SB2209_RP2040 v1.0 was missing MCU_ONBOARD_NTC100K definition
+- Endprint and startprint retract-unretract is now parametric
+- Update prime_line.cfg
+- Change wipe move to G0
+- Update variables to match naming scheme
+- Update BTT_Manta_M8P_v2.0.cfg
+- Definitions of the LDO_Nitehawk_SB_v1.0 fan tacho pins of inverted.
+- Mini12864 beeper change due to klipper change
+- Update homing_override.cfg
+- Update system_info.py
+- Swap MMU_EJECT to MMU_UNLOAD
+- Swap MMU_EJECT to MMU_UNLOAD
+- Update stale.yml
+- Nozzle cleaning parameters update
+- Update BTT_SKR_2.cfg to fix EXP1_4 typo
+- Update Shake&Tune path
+- Comment the default minimum_cruise_ratio to not break older Klipper versions
+- Switch to the new minimum_cruise_ratio Klipper parameter
+- Update cabinet_temp.cfg
+- Update rpi_temp.cfg
+- Update homing_override to improve sensorless homing

@@ -1,0 +1,82 @@
+[changelog]
+body = """
+{% if version %}\
+## [{{ version | trim_start_matches(pat="v") }}]
+{% else %}\
+## [unreleased]
+{% endif %}\
+
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+
+{% for commit in commits -%}
+- {{ commit.message | split(pat="\n") | first | trim | upper_first }}
+{% endfor -%}
+
+{% endfor %}
+"""
+trim = true
+render_always = true
+output = "CHANGELOG.md"
+postprocessors = [
+    { pattern = " \\(#[0-9]+\\)", replace = "" },
+    { pattern = "\\n{3,}", replace = "\n\n" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+require_conventional = false
+split_commits = false
+commit_preprocessors = [
+    { pattern = "\\s+\\(#[0-9]+\\)$", replace = "" },
+    { pattern = "^\\[FEATURE\\]\\s*", replace = "feat: " },
+    { pattern = "^\\[BUGFIX\\]\\s*", replace = "fix: " },
+    { pattern = "^bugfix:\\s*", replace = "fix: " },
+    { pattern = "^fix\\([^)]+\\)\\s+", replace = "fix: " },
+    { pattern = "^add:\\s*", replace = "feat: Add " },
+    { pattern = "^added a fix for\\s+", replace = "fix: Fix " },
+    { pattern = "^added\\s+", replace = "feat: Add " },
+    { pattern = "^Add\\s+", replace = "feat: Add " },
+    { pattern = "^add\\s+", replace = "feat: Add " },
+    { pattern = "^support for\\s+", replace = "feat: Add support for " },
+    { pattern = "^support\\s+", replace = "feat: Support " },
+    { pattern = "^implement\\s+", replace = "feat: Implement " },
+    { pattern = "^fixed\\s+", replace = "fix: Fix " },
+    { pattern = "^Fix\\s+", replace = "fix: Fix " },
+    { pattern = "^fix\\s+", replace = "fix: Fix " },
+    { pattern = "^updated\\s+", replace = "chore: Update " },
+    { pattern = "^Update\\s+", replace = "chore: Update " },
+    { pattern = "^removed\\s+", replace = "chore: Remove " },
+    { pattern = "^switched\\s+", replace = "chore: Switch " },
+    { pattern = "^commented\\s+", replace = "chore: Comment " },
+]
+protect_breaking_commits = false
+commit_parsers = [
+    { message = "^Merge", skip = true },
+    { message = "^merge", skip = true },
+    { message = "^backport", skip = true },
+    { message = "^Backport", skip = true },
+    { message = "^sync", skip = true },
+    { message = "^main -> dev", skip = true },
+    { message = "^chore\\(release\\): prepare for", skip = true },
+    { message = "^chore\\(deps.*\\)", skip = true },
+    { message = "^feat", group = "<!-- 0 -->🚀 Features" },
+    { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+    { message = "^perf", group = "<!-- 3 -->⚡ Performance" },
+    { message = "^doc", group = "<!-- 2 -->💼 Other" },
+    { message = "^test", group = "<!-- 2 -->💼 Other" },
+    { message = "^refactor", group = "<!-- 2 -->💼 Other" },
+    { message = "^style", group = "<!-- 2 -->💼 Other" },
+    { message = "^chore", group = "<!-- 2 -->💼 Other" },
+    { message = "^ci", group = "<!-- 2 -->💼 Other" },
+    { message = ".*", group = "<!-- 2 -->💼 Other" },
+]
+filter_commits = false
+tag_pattern = "v[0-9].*"
+link_parsers = []
+use_branch_tags = false
+topo_order = false
+topo_order_commits = true
+sort_commits = "newest"
+recurse_submodules = false
