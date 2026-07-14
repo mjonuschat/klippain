@@ -21,8 +21,24 @@ REQUIRED_REPO_PATHS = {
     "config/machine.cfg": "file",
     "config/hardware/probes": "dir",
     "macros/base/probing": "dir",
+    "macros/base/probing/generic_probe.cfg": "file",
+    "macros/base/probing/virtual_z_probe.cfg": "file",
+    "macros/base/start_print.cfg": "file",
+    "macros/base/cancel_print.cfg": "file",
+    "macros/base/end_print.cfg": "file",
     "scripts": "dir",
 }
+GUARD_RESET_MACRO = "_PROBE_RESET_CONTACT_GUARD"
+GUARD_ENTER_MACRO = "_PROBE_ENTER_CONTACT_GUARD"
+GUARD_EXIT_MACRO = "_PROBE_EXIT_CONTACT_GUARD"
+# Print lifecycle entry points that must clear a contact guard leaked by an
+# interrupted guarded operation
+GUARD_CLEANUP_CALLERS = (
+    "macros/base/start_print.cfg",
+    "macros/base/cancel_print.cfg",
+    "macros/base/end_print.cfg",
+    "config/machine.cfg",
+)
 
 
 def read(path: Path) -> str:
@@ -67,6 +83,49 @@ def has_macro(text: str, macro: str) -> bool:
     return re.search(rf"^\s*\[gcode_macro\s+{re.escape(macro)}\]\s*(?:#.*)?$", text, re.M) is not None
 
 
+def calls_macro(text: str, macro: str) -> bool:
+    return re.search(rf"^\s*{re.escape(macro)}\b", text, re.M) is not None
+
+
+def macro_bodies(text: str) -> dict[str, str]:
+    bodies: dict[str, str] = {}
+    headers = list(re.finditer(r"^\s*\[gcode_macro\s+([^\]]+)\]\s*(?:#.*)?$", text, re.M))
+    for index, header in enumerate(headers):
+        end = headers[index + 1].start() if index + 1 < len(headers) else len(text)
+        bodies[header.group(1).strip()] = text[header.end():end]
+    return bodies
+
+
+def validate_guard_cleanup(repo: Path) -> list[str]:
+    errors: list[str] = []
+
+    framework_file = repo / "macros" / "base" / "probing" / "virtual_z_probe.cfg"
+    framework_text = read(framework_file)
+    if not has_macro(framework_text, GUARD_RESET_MACRO):
+        errors.append(f"{framework_file}: {GUARD_RESET_MACRO} is not defined")
+
+    for relative_path in GUARD_CLEANUP_CALLERS:
+        path = repo / relative_path
+        if not calls_macro(read(path), GUARD_RESET_MACRO):
+            errors.append(f"{path}: must call {GUARD_RESET_MACRO} to clear a stale contact guard")
+
+    # Guarded wrappers in the framework must pair enter with exit in the same macro.
+    # generic_probe.cfg is the one sanctioned cross-macro pair: ACTIVATE_PROBE enters
+    # and DEACTIVATE_PROBE exits.
+    for name, body in macro_bodies(framework_text).items():
+        if calls_macro(body, GUARD_ENTER_MACRO) and not calls_macro(body, GUARD_EXIT_MACRO):
+            errors.append(f"{framework_file}: [gcode_macro {name}] enters the contact guard but never exits it")
+
+    generic_file = repo / "macros" / "base" / "probing" / "generic_probe.cfg"
+    activate_body = macro_bodies(read(generic_file)).get("ACTIVATE_PROBE", "")
+    enter_call = re.search(rf"^\s*{GUARD_ENTER_MACRO}\b", activate_body, re.M)
+    reset_call = re.search(rf"^\s*{GUARD_RESET_MACRO}\b", activate_body, re.M)
+    if enter_call and (reset_call is None or reset_call.start() > enter_call.start()):
+        errors.append(f"{generic_file}: ACTIVATE_PROBE must clear a stale contact guard before entering a new one")
+
+    return errors
+
+
 def validate_repo_layout(repo: Path) -> list[str]:
     errors: list[str] = []
     if not repo.is_dir():
@@ -86,6 +145,8 @@ def validate(repo: Path) -> list[str]:
     errors = validate_repo_layout(repo)
     if errors:
         return errors
+
+    errors.extend(validate_guard_cleanup(repo))
 
     profiles_dir = repo / "config" / "hardware" / "probes"
     hooks_dir = repo / "macros" / "base" / "probing" / "hooks"

@@ -27,17 +27,61 @@ def startprint_actions(text: str) -> tuple[str, ...]:
     return ast.literal_eval(profile_variable(text, "startprint_actions"))
 
 
+MINIMAL_MACHINE_CFG = """[virtual_sdcard]
+on_error_gcode:
+    _PROBE_RESET_CONTACT_GUARD
+"""
+
+MINIMAL_VIRTUAL_Z_PROBE_CFG = """[gcode_macro _PROBE_RESET_CONTACT_GUARD]
+gcode:
+
+[gcode_macro _PROBE_CONTACT_Z_HOME]
+gcode:
+    _PROBE_ENTER_CONTACT_GUARD OPERATION=contact_z_home SOURCE=manual
+    _PROBE_EXIT_CONTACT_GUARD
+"""
+
+MINIMAL_GENERIC_PROBE_CFG = """[gcode_macro ACTIVATE_PROBE]
+gcode:
+    _PROBE_RESET_CONTACT_GUARD
+    _PROBE_ENTER_CONTACT_GUARD OPERATION=activate_probe SOURCE=manual
+
+[gcode_macro DEACTIVATE_PROBE]
+gcode:
+    _PROBE_EXIT_CONTACT_GUARD
+"""
+
+
+def minimal_lifecycle_macro(name: str) -> str:
+    return f"[gcode_macro {name}]\ngcode:\n    _PROBE_RESET_CONTACT_GUARD\n"
+
+
 def make_minimal_repo(tmp_path: Path) -> Path:
     repo = tmp_path
     (repo / "README.md").write_text("", encoding="utf-8")
     (repo / "config").mkdir()
-    (repo / "config" / "machine.cfg").write_text("", encoding="utf-8")
+    (repo / "config" / "machine.cfg").write_text(MINIMAL_MACHINE_CFG, encoding="utf-8")
     (repo / "config" / "hardware").mkdir()
     (repo / "config" / "hardware" / "probes").mkdir()
     (repo / "macros").mkdir()
     (repo / "macros" / "base").mkdir()
     (repo / "macros" / "base" / "probing").mkdir()
     (repo / "macros" / "base" / "probing" / "hooks").mkdir()
+    (repo / "macros" / "base" / "probing" / "virtual_z_probe.cfg").write_text(
+        MINIMAL_VIRTUAL_Z_PROBE_CFG, encoding="utf-8"
+    )
+    (repo / "macros" / "base" / "probing" / "generic_probe.cfg").write_text(
+        MINIMAL_GENERIC_PROBE_CFG, encoding="utf-8"
+    )
+    (repo / "macros" / "base" / "start_print.cfg").write_text(
+        minimal_lifecycle_macro("START_PRINT"), encoding="utf-8"
+    )
+    (repo / "macros" / "base" / "cancel_print.cfg").write_text(
+        minimal_lifecycle_macro("CANCEL_PRINT"), encoding="utf-8"
+    )
+    (repo / "macros" / "base" / "end_print.cfg").write_text(
+        minimal_lifecycle_macro("END_PRINT"), encoding="utf-8"
+    )
     (repo / "scripts").mkdir()
     return repo
 
@@ -119,6 +163,78 @@ gcode:
                     for error in validator.validate(repo)
                 ),
             )
+
+
+class ContactGuardCleanupTest(unittest.TestCase):
+    def test_compliant_minimal_repo_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = make_minimal_repo(Path(tmpdir))
+
+            self.assertEqual([], validator.validate(repo))
+
+    def test_lifecycle_entry_points_must_clear_stale_guard(self) -> None:
+        for relative_path in validator.GUARD_CLEANUP_CALLERS:
+            with self.subTest(relative_path=relative_path), tempfile.TemporaryDirectory() as tmpdir:
+                repo = make_minimal_repo(Path(tmpdir))
+                path = repo / relative_path
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace("_PROBE_RESET_CONTACT_GUARD", "G4 P0"),
+                    encoding="utf-8",
+                )
+
+                self.assertTrue(
+                    any(
+                        "must call _PROBE_RESET_CONTACT_GUARD" in error and relative_path in error
+                        for error in validator.validate(repo)
+                    ),
+                )
+
+    def test_reset_macro_must_be_defined(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = make_minimal_repo(Path(tmpdir))
+            (repo / "macros" / "base" / "probing" / "virtual_z_probe.cfg").write_text(
+                "[gcode_macro _PROBE_CONTACT_Z_HOME]\ngcode:\n", encoding="utf-8"
+            )
+
+            self.assertTrue(
+                any(
+                    "_PROBE_RESET_CONTACT_GUARD is not defined" in error
+                    for error in validator.validate(repo)
+                ),
+            )
+
+    def test_guarded_wrapper_must_exit_guard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = make_minimal_repo(Path(tmpdir))
+            (repo / "macros" / "base" / "probing" / "virtual_z_probe.cfg").write_text(
+                MINIMAL_VIRTUAL_Z_PROBE_CFG.replace("    _PROBE_EXIT_CONTACT_GUARD\n", ""),
+                encoding="utf-8",
+            )
+
+            self.assertTrue(
+                any(
+                    "[gcode_macro _PROBE_CONTACT_Z_HOME] enters the contact guard but never exits it" in error
+                    for error in validator.validate(repo)
+                ),
+            )
+
+    def test_activate_probe_must_reset_before_entering_guard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo = make_minimal_repo(Path(tmpdir))
+            (repo / "macros" / "base" / "probing" / "generic_probe.cfg").write_text(
+                MINIMAL_GENERIC_PROBE_CFG.replace("    _PROBE_RESET_CONTACT_GUARD\n", ""),
+                encoding="utf-8",
+            )
+
+            self.assertTrue(
+                any(
+                    "ACTIVATE_PROBE must clear a stale contact guard before entering a new one" in error
+                    for error in validator.validate(repo)
+                ),
+            )
+
+    def test_repo_satisfies_guard_cleanup_contracts(self) -> None:
+        self.assertEqual([], validator.validate_guard_cleanup(REPO_ROOT))
 
 
 class CartographerTouchProfileTest(unittest.TestCase):
