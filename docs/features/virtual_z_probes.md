@@ -64,6 +64,14 @@ contact_z_home fails closed when the active probe profile does not support hook-
 variable_probe_unsupported_contact_action_policy: "error"
 ```
 
+## Guard Recovery
+
+If a guarded contact operation is interrupted (print error, cancel, emergency stop), the temperature guard state is cleared automatically the next time it matters: `START_PRINT`, `CANCEL_PRINT`, `END_PRINT`, the `virtual_sdcard` error handler, and `ACTIVATE_PROBE` all discard a stale guard silently. These resets never move the toolhead and never change the extruder target; `START_PRINT` re-establishes its temperatures itself.
+
+`_PROBE_RECOVER_CONTACT_GUARD` remains available for manual inspection. Run it to see the saved extruder target, then run `_PROBE_RECOVER_CONTACT_GUARD CONFIRM=1` to restore that target once the nozzle is clear of the bed.
+
+With Klippain verbose mode enabled, guard enter, exit, and reset events are reported in the console to help diagnose probing issues.
+
 ## Developer Notes
 
 To add a new virtual-Z contact probe, create a concrete profile in `config/hardware/probes/`. Set capability variables and include a hook file only when the probe needs product-specific commands.
