@@ -62,3 +62,44 @@ END_PRINT
 In addition, there are a few other optional parameters that are supported in Klippain (they must be added on the same line after the first parameters):
   - `FILTER_TIME=600` that will override the corresponding variable defined in Klippain `variables.cfg` for this specific print. Time is expressed in seconds.
   - `MMU_UNLOAD_AT_END=0` or `1` *(only for MMU users)* that will override the corresponding variable defined in Klippain `variables.cfg`.
+
+## Keeping variables.cfg up to date
+
+Klippain adds new variables to `variables.cfg` as it develops. Your copy is
+made once, when you first install, so variables added later do not appear in
+it on their own and the macros that read them fail.
+
+To pull them in, run:
+
+```bash
+python3 ~/klippain_config/scripts/sync_variables.py --diff   # preview
+python3 ~/klippain_config/scripts/sync_variables.py          # apply
+```
+
+Running the install script does the same thing as part of its normal work.
+Your previous file is copied to `~/klippain_config_backups/variables/` first,
+and the sync prints the exact name.
+
+Your values are kept, and any variables you added yourself are moved to a
+`## Custom variables` block at the end, along with the comments you wrote above
+them. **Comments you add above Klippain's own variables are replaced** by the
+shipped ones — put anything you want to keep in `overrides.cfg`. To stop the sync touching the file at all, set:
+
+```ini
+variable_klippain_variables_autoupdate: False
+```
+
+Three limits are worth knowing about:
+
+- **Updating through Moonraker does not run the sync.** Moonraker never
+  executes a repository's install script — it only reads it to look for system
+  packages — so an update leaves your `variables.cfg` untouched until you run
+  the command above.
+- **Changed defaults do not reach you.** Only *added* variables arrive. If
+  Klippain changes the default of a variable you already have, your value is
+  kept, because a value you never touched cannot be told apart from one you
+  chose deliberately.
+- **Duplicate variable names stop the sync.** Klipper accepts a file that sets
+  the same variable twice and uses the last one, but no regeneration can keep
+  both, so the sync names the variable and asks you to delete the one you do
+  not want.
