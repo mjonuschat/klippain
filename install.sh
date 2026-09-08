@@ -325,6 +325,19 @@ function install_mcu_templates {
     fi
 }
 
+# Step 4b: Sync the user variables.cfg with the shipped template
+function sync_variables {
+    if ! command -v python3 > /dev/null 2>&1; then
+        printf "[SYNC] python3 not found: skipping the variables.cfg sync\n\n"
+        return 0
+    fi
+    if ! python3 "${FRIX_CONFIG_PATH}/scripts/sync_variables.py" \
+        --template "${FRIX_CONFIG_PATH}/user_templates/variables.cfg" \
+        --target "${USER_CONFIG_PATH}/variables.cfg"; then
+        printf "[SYNC] variables.cfg was left unchanged; continuing with the update\n\n"
+    fi
+}
+
 # Step 5: restarting Klipper
 function restart_klipper {
     echo "[POST-INSTALL] Restarting Klipper..."
@@ -343,6 +356,7 @@ preflight_checks
 check_download
 backup_config
 install_config
+sync_variables
 restart_klipper
 
 wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
